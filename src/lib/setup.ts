@@ -29,24 +29,24 @@ export const beginnerSetupSteps: SetupStep[] = [
       "Run cp .env.example .env.local for local work. In Vercel, open Project Settings > Environment Variables and add the same keys there.",
   },
   {
-    title: "Generate AUTH_SECRET once",
-    detail:
-      "Use a long random secret such as the output of openssl rand -base64 32. Keep the same value across preview and production if you want stable sessions.",
-  },
-  {
-    title: "Turn on OAuth login",
-    detail:
-      "Add Google, GitHub, or both. Each provider needs its client ID and client secret pair before the login screen can offer that button in production.",
-  },
-  {
     title: "Switch persistence to Neon",
     detail:
-      "Add DATABASE_URL or NEON_DATABASE_URL. As soon as one of those exists, Herizon stops using the local JSON fallback and persists workspace state in the database.",
+      "Add DATABASE_URL or NEON_DATABASE_URL. As soon as one of those exists, Herizon stops using the local JSON fallback and persists the public workspace in the database.",
   },
   {
     title: "Paste supported source URLs",
     detail:
       "In the workspace, paste a supported board URL exactly as the employer uses it. Herizon infers the connector from the URL and folds it into the next refresh.",
+  },
+  {
+    title: "Optionally generate AUTH_SECRET",
+    detail:
+      "Use a long random secret such as the output of openssl rand -base64 32 only if you want to re-enable Auth.js login later.",
+  },
+  {
+    title: "Optionally turn on OAuth login",
+    detail:
+      "Add Google, GitHub, or both if you want account-based access later. Each provider needs its client ID and client secret pair before the login screen can be turned back on in production.",
   },
 ];
 
@@ -55,21 +55,21 @@ export const productionConnections: ProductionConnection[] = [
     id: "auth-secret",
     label: "Session secret",
     envVars: ["AUTH_SECRET"],
-    summary: "Required for production Auth.js sessions.",
-    required: true,
+    summary: "Optional while public access is enabled. Required only if you re-enable Auth.js sessions.",
+    required: false,
   },
   {
     id: "google-oauth",
     label: "Google OAuth",
     envVars: ["AUTH_GOOGLE_ID", "AUTH_GOOGLE_SECRET"],
-    summary: "Optional provider. Configure this if you want Google sign-in.",
+    summary: "Optional provider. Configure this only if you want Google sign-in later.",
     required: false,
   },
   {
     id: "github-oauth",
     label: "GitHub OAuth",
     envVars: ["AUTH_GITHUB_ID", "AUTH_GITHUB_SECRET"],
-    summary: "Optional provider. Configure this if you want GitHub sign-in.",
+    summary: "Optional provider. Configure this only if you want GitHub sign-in later.",
     required: false,
   },
   {

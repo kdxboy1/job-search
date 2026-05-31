@@ -5,9 +5,9 @@ Herizon is a Vercel-ready labor-market intelligence platform built for curated p
 ## What the platform now includes
 
 - Curated source management for job boards, company directories, and mixed pages.
-- Structured adapters for Tyomarkkinatori, Greenhouse, Lever, and SmartRecruiters, plus a conservative HTML fallback for unmodeled sources.
+- Structured adapters for Tyomarkkinatori, Greenhouse, Lever, SmartRecruiters, and Ashby, plus a conservative HTML fallback for unmodeled sources.
 - Source snapshots that explicitly separate sampled detail rows from live market totals.
-- Authenticated workspace flow with login, persistent sessions, and a public landing/research shell.
+- Public workspace flow with temporary open access, optional Auth.js plumbing for later, and a public landing/research shell.
 - Persistent saved searches, historical refresh snapshots, and company CRM notes.
 - Dual workspace modes: a dense pro terminal and a simplified AI-first mode.
 - A researched country catalog covering prominent portals and board patterns across Finland, France, Germany, Netherlands, Belgium, Poland, the UK, the US, Sweden, and Norway.
@@ -27,7 +27,7 @@ Herizon is a Vercel-ready labor-market intelligence platform built for curated p
 - Recharts for visualization
 - Leaflet for map rendering
 - Structured public APIs plus Cheerio-backed HTML fallback parsing
-- Auth.js for sign-in flows and persistent sessions
+- Auth.js wiring for optional sign-in flows when login is re-enabled
 - Neon-ready or local-file workspace persistence
 - Vercel-friendly API routes for scraping and orchestration
 - Vitest for unit coverage
@@ -45,19 +45,19 @@ Open `http://localhost:3000`.
 ## Beginner setup flow
 
 1. Copy `.env.example` to `.env.local` for local work.
-2. Generate `AUTH_SECRET` once with `openssl rand -base64 32`.
-3. Add at least one OAuth provider pair: `AUTH_GOOGLE_ID` + `AUTH_GOOGLE_SECRET` or `AUTH_GITHUB_ID` + `AUTH_GITHUB_SECRET`.
-4. Add `DATABASE_URL` or `NEON_DATABASE_URL` to switch workspace persistence from the local JSON fallback to Neon.
-5. In Vercel, open your project, go to `Settings -> Environment Variables`, add the same keys for Preview and Production, and redeploy.
+2. Add `DATABASE_URL` or `NEON_DATABASE_URL` to switch workspace persistence from the local JSON fallback to Neon.
+3. In Vercel, open your project, go to `Settings -> Environment Variables`, add the same keys for Preview and Production, and redeploy.
+4. If you want to re-enable login later, generate `AUTH_SECRET` with `openssl rand -base64 32`.
+5. If you want account-based access later, add `AUTH_GOOGLE_ID` + `AUTH_GOOGLE_SECRET` or `AUTH_GITHUB_ID` + `AUTH_GITHUB_SECRET`.
 
-If you want an in-app walkthrough, open `/setup`. The page shows the exact env names, current connection status, and supported source URL patterns you can paste directly into the workspace.
+If you want an in-app walkthrough, open `/setup`. The page shows the exact env names, current connection status, which items are optional in public-access mode, and supported source URL patterns you can paste directly into the workspace.
 
 ## Environment variables
 
 - `OPENAI_API_KEY`: optional. Enables OpenAI-backed refinement for grounded copilot answers. Without it, the app uses deterministic grounded responses.
-- `AUTH_SECRET`: required for production authentication.
-- `AUTH_GOOGLE_ID`, `AUTH_GOOGLE_SECRET`: optional OAuth provider for Google sign-in.
-- `AUTH_GITHUB_ID`, `AUTH_GITHUB_SECRET`: optional OAuth provider for GitHub sign-in.
+- `AUTH_SECRET`: optional while the app is in public-access mode. Required only if you re-enable Auth.js login.
+- `AUTH_GOOGLE_ID`, `AUTH_GOOGLE_SECRET`: optional OAuth provider for Google sign-in if login is re-enabled.
+- `AUTH_GITHUB_ID`, `AUTH_GITHUB_SECRET`: optional OAuth provider for GitHub sign-in if login is re-enabled.
 - `DATABASE_URL` or `NEON_DATABASE_URL`: optional. Enables Neon-backed workspace persistence in production. Without it, Herizon falls back to a local JSON workspace store for development.
 
 ## Supported source quick starts
@@ -82,9 +82,9 @@ npm run build
 ## Deploy to Vercel
 
 1. Import the repository into Vercel.
-2. Set `AUTH_SECRET` and at least one OAuth provider if you want a full production login flow.
-3. Set `DATABASE_URL` or `NEON_DATABASE_URL` if you want production-grade persistence instead of the local development file store.
-4. Set `OPENAI_API_KEY` if you want model-backed copilot responses.
+2. Set `DATABASE_URL` or `NEON_DATABASE_URL` if you want production-grade shared persistence instead of the local development file store.
+3. Set `OPENAI_API_KEY` if you want model-backed copilot responses.
+4. Optionally set `AUTH_SECRET` and an OAuth provider if you plan to turn login back on later.
 5. Deploy. The app runs as a normal Next.js project with Node.js API routes.
 
 ## Grounding model

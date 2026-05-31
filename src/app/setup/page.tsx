@@ -1,6 +1,5 @@
 import Link from "next/link";
 
-import { auth } from "@/auth";
 import { SiteHeader } from "@/components/site-header";
 import {
   beginnerSetupSteps,
@@ -64,13 +63,12 @@ function statusClass(configured: boolean, required: boolean): string {
   return "status-pill";
 }
 
-export default async function SetupPage() {
-  const session = await auth();
+export default function SetupPage() {
   const status = getSetupStatus();
 
   return (
     <main className="pb-16">
-      <SiteHeader authenticated={Boolean(session?.user?.email)} userName={session?.user?.name} />
+      <SiteHeader />
 
       <section className="page-shell">
         <div className="page-grid">
@@ -79,18 +77,15 @@ export default async function SetupPage() {
               <div>
                 <p className="eyebrow">Beginner setup guide</p>
                 <h1 className="mt-4 max-w-4xl text-5xl font-semibold leading-[0.95] tracking-[-0.05em] text-[var(--foreground)] sm:text-6xl">
-                  Connect production auth, persistence, and source inputs without guessing.
+                  Connect persistence, source inputs, and optional auth without guessing.
                 </h1>
                 <p className="section-copy mt-5 max-w-3xl">
-                  The production stack is simple on purpose: add AUTH_SECRET, configure at least one OAuth provider, add DATABASE_URL or NEON_DATABASE_URL, and Herizon switches from the dev-friendly fallback flow to persistent multi-user sessions and workspace storage.
+                  Public access is enabled right now, so anyone can open the workspace without login. Add DATABASE_URL or NEON_DATABASE_URL for persistent shared storage, and add AUTH_SECRET plus OAuth providers later if you want to turn account-based access back on.
                 </p>
 
                 <div className="mt-8 flex flex-wrap gap-3">
-                  <Link
-                    className="action-button"
-                    href={session?.user?.email ? "/workspace#sources" : "/login?callbackUrl=/workspace"}
-                  >
-                    {session?.user?.email ? "Open workspace setup" : "Log in to workspace"}
+                  <Link className="action-button" href="/workspace#sources">
+                    Open workspace setup
                   </Link>
                   <Link className="secondary-button" href="/research">
                     See the research shell
@@ -102,7 +97,7 @@ export default async function SetupPage() {
                     Vercel path
                   </p>
                   <p className="mt-3 text-sm leading-7 text-[var(--muted)]">
-                    In Vercel, open your project, go to Settings, then Environment Variables. Add the keys below for Preview and Production, redeploy, and the app will automatically pick up the production-grade auth and database flow.
+                    In Vercel, open your project, go to Settings, then Environment Variables. Add the keys below for Preview and Production, redeploy, and the app will automatically pick up persistent shared storage. Auth keys are optional until you decide to re-enable login.
                   </p>
                 </div>
               </div>

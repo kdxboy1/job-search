@@ -1,4 +1,3 @@
-import { auth } from "@/auth";
 import { SiteHeader } from "@/components/site-header";
 import {
   featuredReports,
@@ -9,12 +8,10 @@ import {
 
 export const dynamic = "force-dynamic";
 
-export default async function ResearchPage() {
-  const session = await auth();
-
+export default function ResearchPage() {
   return (
     <main className="pb-16">
-      <SiteHeader authenticated={Boolean(session?.user?.email)} userName={session?.user?.name} />
+      <SiteHeader />
 
       <section className="page-shell">
         <div className="page-grid">

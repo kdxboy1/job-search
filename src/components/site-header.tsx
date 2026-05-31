@@ -1,19 +1,6 @@
 import Link from "next/link";
 
-import { signOut } from "@/auth";
-
-type SiteHeaderProps = {
-  userName?: string | null;
-  authenticated?: boolean;
-};
-
-export function SiteHeader({ authenticated = false, userName }: SiteHeaderProps) {
-  async function signOutAction() {
-    "use server";
-
-    await signOut({ redirectTo: "/" });
-  }
-
+export function SiteHeader() {
   return (
     <header className="mx-auto flex w-full max-w-7xl items-center justify-between gap-4 px-4 pt-6 sm:px-6 lg:px-8">
       <Link className="inline-flex items-center gap-3" href="/">
@@ -37,23 +24,10 @@ export function SiteHeader({ authenticated = false, userName }: SiteHeaderProps)
         <Link className="secondary-button" href="/research">
           Research
         </Link>
-        <Link className="secondary-button" href="/workspace">
-          Workspace
+        <span className="status-pill">Open access</span>
+        <Link className="action-button" href="/workspace">
+          Open workspace
         </Link>
-        {authenticated ? (
-          <>
-            <span className="status-pill">{userName ?? "Analyst"}</span>
-            <form action={signOutAction}>
-              <button className="action-button" type="submit">
-                Sign out
-              </button>
-            </form>
-          </>
-        ) : (
-          <Link className="action-button" href="/login">
-            Log in
-          </Link>
-        )}
       </nav>
     </header>
   );

@@ -499,10 +499,10 @@ export function Dashboard({
     <section className="panel p-6">
       <div className="flex flex-col gap-4 xl:flex-row xl:items-start xl:justify-between">
         <div>
-          <p className="eyebrow">Authenticated workspace</p>
+          <p className="eyebrow">Public workspace</p>
           <h1 className="section-title">Herizon command desk</h1>
           <p className="section-copy mt-3 max-w-3xl">
-            Persistent sources, saved searches, refresh history, and company notes now live in the workspace rather than in browser-only state.
+            The workspace is temporarily open to everyone. Sources, saved searches, refresh history, and company notes are available without login and are currently shared across visitors.
           </p>
         </div>
 
@@ -534,6 +534,7 @@ export function Dashboard({
           <UserRound className="h-3.5 w-3.5" />
           {currentUser?.name ?? currentUser?.email ?? "Analyst"}
         </span>
+        <span className="status-pill">Shared public state</span>
         <span className="status-pill">{savedSearches.length} saved searches</span>
         <span className="status-pill">{snapshotHistory.length} refresh snapshots</span>
         <span className="status-pill">{companyNotes.length} CRM notes</span>

@@ -1,11 +1,11 @@
 import { NextResponse } from "next/server";
 import { z } from "zod";
 
-import { auth } from "@/auth";
 import { recordSnapshotHistory } from "@/lib/persistence";
 import { collectPlatformIntelligence } from "@/lib/platform";
 import { defaultSources } from "@/lib/seed";
 import { hydrateSourceConfig, SourceConfigSchema } from "@/lib/types";
+import { PUBLIC_WORKSPACE_KEY } from "@/lib/workspace-access";
 
 export const dynamic = "force-dynamic";
 export const runtime = "nodejs";
@@ -29,12 +29,7 @@ export async function POST(request: Request) {
 
   const sources = parsed.data.sources?.map((source) => hydrateSourceConfig(source)) ?? defaultSources;
   const intelligence = await collectPlatformIntelligence(sources);
-
-  const session = await auth();
-
-  if (session?.user?.email) {
-    await recordSnapshotHistory(session.user.email, intelligence);
-  }
+  await recordSnapshotHistory(PUBLIC_WORKSPACE_KEY, intelligence);
 
   return NextResponse.json(intelligence);
 }

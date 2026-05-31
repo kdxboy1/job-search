@@ -4,21 +4,21 @@ This file explains what was added recently, feature by feature, and what you nee
 
 ## What is already built
 
-### 1. Production auth and persistent workspace flow
+### 1. Temporary public workspace and persistent workspace flow
 
-The app is no longer just a local demo dashboard.
+The app is no longer blocked behind login.
 
 It now supports:
 
-- Login flow with Auth.js
-- Google OAuth support
-- GitHub OAuth support
-- A demo credentials fallback for development
-- Persistent workspace state for saved searches, notes, source lists, refresh history, and mode preferences
+- A public workspace that opens without login
+- Persistent shared workspace state for saved searches, notes, source lists, refresh history, and mode preferences
+- Auth.js plumbing that can be turned back on later
+- Google OAuth support ready for later re-enable
+- GitHub OAuth support ready for later re-enable
 
 In development, the app can still fall back to a local JSON file.
 
-In production, it is designed to use Neon via `DATABASE_URL` or `NEON_DATABASE_URL`.
+In production, it is designed to use Neon via `DATABASE_URL` or `NEON_DATABASE_URL` for durable shared state.
 
 ### 2. Beginner-friendly setup flow
 
@@ -31,7 +31,7 @@ It shows:
 - Which items are required versus optional
 - Supported source URL examples that can be pasted directly into the workspace
 
-This was added so a new user does not need to guess how auth, database, and AI wiring work.
+This was added so a new user does not need to guess how public access, database, and optional AI or auth wiring work.
 
 ### 3. Better source onboarding inside the workspace
 
@@ -88,7 +88,7 @@ The app now has a more complete business-facing surface, including:
 - Public landing page
 - Public setup page
 - Public research page
-- Authenticated workspace page
+- Public workspace page
 
 This makes the app feel closer to a real product instead of a single internal dashboard view.
 
@@ -98,15 +98,16 @@ You now have:
 
 - A full-stack Next.js app that builds successfully
 - A Vercel-ready deployment target
+- An open workspace anyone can access immediately
 - A clearer onboarding path for auth, database, and source setup
 - More reliable source ingestion through typed connectors
 - A stronger foundation for turning this into a persistent multi-user product
 
 ## What you still need to do to deploy it
 
-The code is ready, but production deployment still requires your real environment values.
+The code is ready, but production deployment still requires your real database value if you want persistent shared state in production.
 
-I cannot create your OAuth apps or database credentials from inside this workspace, so these are the steps you need to take manually.
+I cannot create your database or optional OAuth credentials from inside this workspace, so these are the steps you need to take manually.
 
 ## Deploy checklist
 
@@ -132,13 +133,13 @@ Open:
 
 Add these values.
 
-Required for production auth and persistence:
+Required for production shared persistence:
 
-- `AUTH_SECRET`
 - `DATABASE_URL` or `NEON_DATABASE_URL`
 
-Optional but strongly recommended for real login:
+Optional if you want to re-enable login later:
 
+- `AUTH_SECRET`
 - `AUTH_GOOGLE_ID`
 - `AUTH_GOOGLE_SECRET`
 - `AUTH_GITHUB_ID`
@@ -148,7 +149,7 @@ Optional for model-backed AI behavior:
 
 - `OPENAI_API_KEY`
 
-### Step 4. Generate `AUTH_SECRET`
+### Step 4. Optionally generate `AUTH_SECRET`
 
 Generate a secure random secret locally with:
 
@@ -156,11 +157,11 @@ Generate a secure random secret locally with:
 openssl rand -base64 32
 ```
 
-Paste the output into `AUTH_SECRET` in Vercel.
+Paste the output into `AUTH_SECRET` in Vercel only if you want to turn account-based auth back on later.
 
-### Step 5. Create OAuth credentials
+### Step 5. Optionally create OAuth credentials
 
-If you want Google and/or GitHub login, create OAuth apps for your Vercel domain.
+If you want Google and/or GitHub login later, create OAuth apps for your Vercel domain.
 
 Then place the client ID and secret into:
 
@@ -169,7 +170,7 @@ Then place the client ID and secret into:
 - `AUTH_GITHUB_ID`
 - `AUTH_GITHUB_SECRET`
 
-If you skip this, the production app will not have real OAuth login.
+If you skip this, the app will still be publicly accessible; it just will not have account-based login.
 
 ### Step 6. Create or connect a Neon database
 
@@ -183,7 +184,7 @@ or:
 
 - `NEON_DATABASE_URL`
 
-Once this is set, the app will stop relying on the local development fallback store and start using persistent database-backed workspace state.
+Once this is set, the app will stop relying on the local development fallback store and start using persistent database-backed shared workspace state.
 
 ### Step 7. Redeploy
 
@@ -198,29 +199,27 @@ After the deploy finishes, check these pages:
 - `/`
 - `/setup`
 - `/research`
-- `/login`
 - `/workspace`
 
 What to verify:
 
 - The setup page loads
-- Required env items show as connected when configured
-- Login works
+- The database item shows as connected when configured
 - Workspace loads without auth errors
 - Source examples can be added
 - A refresh run completes successfully
+- Visiting `/login` redirects into the workspace instead of showing a login wall
 
 ## Recommended minimum production configuration
 
 If you want the fastest path to a real deployment, do this minimum set:
 
-1. Add `AUTH_SECRET`
-2. Add one OAuth provider, Google or GitHub
-3. Add `DATABASE_URL` or `NEON_DATABASE_URL`
-4. Deploy to Vercel
-5. Test `/setup` and `/workspace`
+1. Add `DATABASE_URL` or `NEON_DATABASE_URL`
+2. Deploy to Vercel
+3. Test `/setup` and `/workspace`
+4. Re-enable auth later only if you want separate user accounts
 
-That is the point where the app stops behaving like a local prototype and starts behaving like a real hosted product.
+That is the point where the app stops behaving like a local prototype and starts behaving like a real hosted product with shared public access.
 
 ## Validation status
 

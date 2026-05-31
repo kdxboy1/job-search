@@ -1,7 +1,6 @@
 import { NextResponse } from "next/server";
 import { z } from "zod";
 
-import { auth } from "@/auth";
 import {
   deleteSearchRecord,
   getWorkspaceEnvelope,
@@ -16,6 +15,7 @@ import {
   SourceConfigSchema,
   WorkspaceModeSchema,
 } from "@/lib/types";
+import { PUBLIC_WORKSPACE_KEY } from "@/lib/workspace-access";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -58,34 +58,18 @@ const workspaceActionSchema = z.discriminatedUnion("action", [
   }),
 ]);
 
-async function getUserKey() {
-  const session = await auth();
-
-  if (!session?.user?.email) {
-    return null;
-  }
-
-  return session.user.email;
+function getUserKey() {
+  return PUBLIC_WORKSPACE_KEY;
 }
 
 export async function GET() {
-  const userKey = await getUserKey();
-
-  if (!userKey) {
-    return NextResponse.json({ error: "Authentication required." }, { status: 401 });
-  }
-
+  const userKey = getUserKey();
   const workspace = await getWorkspaceEnvelope(userKey);
   return NextResponse.json(workspace);
 }
 
 export async function PATCH(request: Request) {
-  const userKey = await getUserKey();
-
-  if (!userKey) {
-    return NextResponse.json({ error: "Authentication required." }, { status: 401 });
-  }
-
+  const userKey = getUserKey();
   const rawBody = await request.json().catch(() => ({}));
   const parsed = workspaceActionSchema.safeParse(rawBody);
 

@@ -1,19 +1,17 @@
 import Link from "next/link";
 
-import { auth } from "@/auth";
 import { SiteHeader } from "@/components/site-header";
 import { featuredReports, researchMetrics, researchPlatforms } from "@/lib/research";
 import { countrySourceCatalog, getGlobalAtsCatalog } from "@/lib/source-catalog";
 
 export const dynamic = "force-dynamic";
 
-export default async function Home() {
-  const session = await auth();
+export default function Home() {
   const supportedAts = getGlobalAtsCatalog().filter((platform) => platform.readiness === "supported");
 
   return (
     <main className="pb-16">
-      <SiteHeader authenticated={Boolean(session?.user?.email)} userName={session?.user?.name} />
+      <SiteHeader />
 
       <section className="page-shell">
         <div className="page-grid">
@@ -25,14 +23,14 @@ export default async function Home() {
                   Herizon turns fragmented job boards into a professional labor-market terminal.
                 </h1>
                 <p className="section-copy mt-5 max-w-3xl">
-                  The product now has a real authenticated workspace, persistent saved searches,
-                  historical refresh memory, CRM notes for target companies, a researched
-                  country-source atlas, and a public research layer inspired by employability intelligence products.
+                  The product now has a public workspace, persistent shared market memory,
+                  CRM notes for target companies, a researched country-source atlas, and a
+                  public research layer inspired by employability intelligence products.
                 </p>
 
                 <div className="mt-8 flex flex-wrap gap-3">
-                  <Link className="action-button" href={session?.user?.email ? "/workspace" : "/login"}>
-                    {session?.user?.email ? "Open workspace" : "Log in to workspace"}
+                  <Link className="action-button" href="/workspace">
+                    Open workspace
                   </Link>
                   <Link className="secondary-button" href="/setup">
                     Open setup guide

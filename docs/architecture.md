@@ -9,11 +9,11 @@ The current platform includes:
 - A source registry and country atlas for curated job boards, company directories, ATS families, and mixed sources.
 - Server-side refresh routines that prefer source-specific adapters, currently Tyomarkkinatori, Greenhouse, Lever, SmartRecruiters, and Ashby, before falling back to conservative HTML parsing.
 - A richer job fact model with technologies, seniority, work modes, employment types, years of experience, and Finnish/language requirement signals.
-- An authenticated workspace that persists custom sources, saved searches, refresh history, company CRM notes, and preferred view mode.
+- A public workspace that persists custom sources, saved searches, refresh history, company CRM notes, and preferred view mode in a shared state while login is temporarily disabled.
 - A dashboard that visualizes market totals, sampled fact rows, technology pressure, seniority mix, language requirements, company concentration, and nearby companies on a map.
 - A smart query lens that turns natural search text into structured filters and technology comparisons.
 - API routes for refreshing intelligence, persisting workspace state, answering grounded copilot questions, and drafting outreach plans.
-- A public marketing, setup, and research layer that sits in front of the authenticated workspace.
+- A public marketing, setup, and research layer that sits in front of the workspace.
 - A transparency layer that shows whether each source is live or fallback.
 
 ## Directory map
@@ -35,10 +35,10 @@ The current platform includes:
 ## Deployment model
 
 - The app deploys directly to Vercel as a standard Next.js project.
-- `src/app/workspace/page.tsx` is forced dynamic so the authenticated workspace reflects the latest refresh attempt.
+- `src/app/workspace/page.tsx` is forced dynamic so the public workspace reflects the latest refresh attempt.
 - `src/app/setup/page.tsx` is dynamic so the setup guide can reflect which integrations are configured in the current environment.
 - API routes run in the Node.js runtime because scraping and HTML parsing use server-only packages.
-- Auth.js handles session cookies and OAuth provider integration.
+- Auth.js wiring remains available if login is re-enabled later.
 - `OPENAI_API_KEY` is optional. Without it, the copilot falls back to deterministic grounded answers.
 - `DATABASE_URL` or `NEON_DATABASE_URL` is optional. Without it, the persistence layer uses a local JSON file store in development.
 
