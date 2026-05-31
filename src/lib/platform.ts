@@ -1,5 +1,5 @@
 import { fallbackCompaniesForSource } from "./seed";
-import { extractCompaniesFromHtml, extractJobsFromHtml, fetchHtml } from "./scrapers";
+import { mergeScrapeResultIntoSnapshot, scrapeSource } from "./scrapers";
 import { dedupeBy, takeTopBuckets } from "./utils";
 import type {
   CompanyProfile,
@@ -34,6 +34,8 @@ function fallbackSnapshot(
     refreshedAt,
     jobsFound: 0,
     companiesFound: companies.length,
+    totalAvailableJobs: 0,
+    totalAvailableCompanies: companies.length,
     notes: companies.length
       ? [reason, "Showing seeded company radar so the workspace stays usable."]
       : [reason, "No fallback data is configured for this source."],
@@ -46,20 +48,9 @@ export async function refreshSource(source: SourceConfig): Promise<SourceSnapsho
   const refreshedAt = new Date().toISOString();
 
   try {
-    const html = await fetchHtml(source.url);
+    const result = await scrapeSource(source);
 
-    let jobs: JobListing[] = [];
-    let companies: CompanyProfile[] = [];
-
-    if (source.kind !== "company-directory") {
-      jobs = extractJobsFromHtml(html, source);
-    }
-
-    if (source.kind !== "jobs") {
-      companies = extractCompaniesFromHtml(html, source);
-    }
-
-    if (!jobs.length && !companies.length) {
+    if (!result.jobs.length && !result.companies.length) {
       const seededFallback = fallbackCompaniesForSource(source.id);
 
       if (seededFallback.length) {
@@ -69,6 +60,8 @@ export async function refreshSource(source: SourceConfig): Promise<SourceSnapsho
           refreshedAt,
           jobsFound: 0,
           companiesFound: seededFallback.length,
+          totalAvailableJobs: 0,
+          totalAvailableCompanies: seededFallback.length,
           notes: [
             "Live HTML was reachable, but the parser did not find structured cards on this refresh.",
             "Showing seeded company radar until you tighten the source-specific parser.",
@@ -79,26 +72,7 @@ export async function refreshSource(source: SourceConfig): Promise<SourceSnapsho
       }
     }
 
-    const notes: string[] = [];
-
-    if (!jobs.length && source.kind !== "company-directory") {
-      notes.push("No job cards were parsed from the latest HTML refresh.");
-    }
-
-    if (!companies.length && source.kind !== "jobs") {
-      notes.push("No company cards were parsed from the latest HTML refresh.");
-    }
-
-    return createSnapshot(source, {
-      status: jobs.length || companies.length ? "ok" : "partial",
-      mode: "live",
-      refreshedAt,
-      jobsFound: jobs.length,
-      companiesFound: companies.length,
-      notes,
-      jobs,
-      companies,
-    });
+    return mergeScrapeResultIntoSnapshot(source, result, refreshedAt);
   } catch (error) {
     const message = error instanceof Error ? error.message : "Unknown fetch failure";
     return fallbackSnapshot(source, refreshedAt, `Live fetch failed: ${message}.`);
@@ -113,11 +87,17 @@ export function buildAnalytics(
   const sourceCounts = new Map<string, number>();
   const locationCounts = new Map<string, number>();
   const sectorCounts = new Map<string, number>();
+  const technologyCounts = new Map<string, number>();
+  const seniorityCounts = new Map<string, number>();
+  const finnishRequirementCounts = new Map<string, number>();
+  const departmentCounts = new Map<string, number>();
+  const companyCounts = new Map<string, number>();
 
   for (const snapshot of snapshots) {
     sourceCounts.set(
       snapshot.source.name,
-      (snapshot.jobsFound || 0) + (snapshot.companiesFound || 0),
+      (snapshot.totalAvailableJobs ?? snapshot.jobsFound ?? 0) +
+        (snapshot.totalAvailableCompanies ?? snapshot.companiesFound ?? 0),
     );
   }
 
@@ -126,6 +106,21 @@ export function buildAnalytics(
       job.normalizedLocation,
       (locationCounts.get(job.normalizedLocation) ?? 0) + 1,
     );
+
+    companyCounts.set(job.company, (companyCounts.get(job.company) ?? 0) + 1);
+    seniorityCounts.set(job.seniority, (seniorityCounts.get(job.seniority) ?? 0) + 1);
+    finnishRequirementCounts.set(
+      job.finnishRequirement,
+      (finnishRequirementCounts.get(job.finnishRequirement) ?? 0) + 1,
+    );
+
+    if (job.department) {
+      departmentCounts.set(job.department, (departmentCounts.get(job.department) ?? 0) + 1);
+    }
+
+    for (const technology of job.technologies) {
+      technologyCounts.set(technology, (technologyCounts.get(technology) ?? 0) + 1);
+    }
   }
 
   for (const company of companies) {
@@ -140,14 +135,27 @@ export function buildAnalytics(
   }
 
   return {
-    totalJobs: jobs.length,
-    totalCompanies: companies.length,
+    totalJobs: snapshots.reduce(
+      (sum, snapshot) => sum + (snapshot.totalAvailableJobs ?? snapshot.jobsFound),
+      0,
+    ),
+    sampledJobs: jobs.length,
+    totalCompanies: snapshots.reduce(
+      (sum, snapshot) => sum + (snapshot.totalAvailableCompanies ?? snapshot.companiesFound),
+      0,
+    ),
+    sampledCompanies: companies.length,
     liveSources: snapshots.filter((snapshot) => snapshot.mode === "live").length,
     fallbackSources: snapshots.filter((snapshot) => snapshot.mode === "fallback").length,
     remoteFriendlyJobs: jobs.filter((job) => job.remote).length,
     bySource: takeTopBuckets(sourceCounts),
     byLocation: takeTopBuckets(locationCounts),
     bySector: takeTopBuckets(sectorCounts),
+    byTechnology: takeTopBuckets(technologyCounts),
+    bySeniority: takeTopBuckets(seniorityCounts),
+    byFinnishRequirement: takeTopBuckets(finnishRequirementCounts),
+    byDepartment: takeTopBuckets(departmentCounts),
+    byCompany: takeTopBuckets(companyCounts),
   };
 }
 
@@ -160,24 +168,33 @@ function buildBrief(
   const topSource = analytics.bySource[0]?.label;
   const liveCount = snapshots.filter((snapshot) => snapshot.mode === "live").length;
   const fallbackCount = snapshots.length - liveCount;
+  const topTechnology = analytics.byTechnology[0]?.label;
 
   return [
     liveCount
       ? `${liveCount} source${liveCount === 1 ? "" : "s"} refreshed live in the current run.`
       : "No source returned live records in the current run.",
+    analytics.totalJobs
+      ? `The tracked market currently exposes ${analytics.totalJobs.toLocaleString()} live openings, with ${analytics.sampledJobs} detail-rich records loaded into the dashboard.`
+      : "No live job totals are available from the current source set.",
     topLocation
       ? `${topLocation} is the densest location signal across jobs and companies right now.`
       : "Location density will appear once the parsers find geographic signals.",
     topSource
       ? `${topSource} is producing the most visible records in this refresh.`
       : "Add more direct company boards if you want stronger source-level coverage.",
+    topTechnology
+      ? `${topTechnology} is the strongest technology signal in the currently loaded job sample.`
+      : companies.length
+        ? `${companies.length} companies are ready for research, outreach, or map-based triage.`
+        : "Company discovery is empty; a company directory source will unlock outreach radar and map views.",
     companies.length
       ? `${companies.length} companies are ready for research, outreach, or map-based triage.`
       : "Company discovery is empty; a company directory source will unlock outreach radar and map views.",
     fallbackCount
       ? `${fallbackCount} source${fallbackCount === 1 ? " is" : "s are"} running on transparent fallback data.`
       : "Everything shown is grounded in the latest live scrape.",
-  ].slice(0, 4);
+  ].slice(0, 5);
 }
 
 export async function collectPlatformIntelligence(

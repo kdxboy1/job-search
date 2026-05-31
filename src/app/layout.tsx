@@ -14,9 +14,9 @@ const ibmPlexMono = IBM_Plex_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "Scout Atlas",
+  title: "Herizon",
   description:
-    "Live-scraped job intelligence, outreach CRM, and company mapping tailored to curated public sources.",
+    "Herizon is a labor-market intelligence workspace with grounded job facts, research publishing, source cataloging, and persistent search CRM.",
 };
 
 export default function RootLayout({

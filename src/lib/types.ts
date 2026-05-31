@@ -6,6 +6,10 @@ export type ParserHint =
   | "generic-jobs"
   | "generic-companies"
   | "generic-mixed"
+  | "ashby"
+  | "greenhouse"
+  | "lever"
+  | "smartrecruiters"
   | "tyomarkkinatori"
   | "dealroom";
 
@@ -13,9 +17,74 @@ export type SnapshotStatus = "ok" | "partial" | "error";
 
 export type RefreshMode = "live" | "fallback";
 
+export type SeniorityLevel =
+  | "intern"
+  | "junior"
+  | "mid"
+  | "senior"
+  | "lead"
+  | "manager"
+  | "director"
+  | "executive"
+  | "unknown";
+
+export type LanguageRequirement =
+  | "required"
+  | "preferred"
+  | "helpful"
+  | "english-friendly"
+  | "not-mentioned";
+
+export type WorkMode = "onsite" | "hybrid" | "remote" | "unspecified";
+
+export type SourceQuality = "api" | "html" | "fallback";
+
+export type WorkspaceMode = "pro" | "simple";
+
+export type CountryCode =
+  | "GLOBAL"
+  | "FI"
+  | "FR"
+  | "DE"
+  | "NL"
+  | "BE"
+  | "PL"
+  | "UK"
+  | "US"
+  | "SE"
+  | "NO";
+
+export type CuratedSourceCategory =
+  | "national-portal"
+  | "private-board"
+  | "company-network"
+  | "ats-platform";
+
+export type IntegrationReadiness = "supported" | "candidate" | "restricted" | "closed";
+
+export type IntegrationStrategy =
+  | "official-api"
+  | "public-search"
+  | "ats-api"
+  | "html-fallback"
+  | "privacy-gated"
+  | "login-gated"
+  | "anti-bot"
+  | "closed";
+
+export type CompanyNoteStatus = "prospect" | "contacted" | "responded" | "paused";
+
+export type PersistenceDriver = "neon" | "file";
+
 export interface Coordinates {
   lat: number;
   lng: number;
+}
+
+export interface ExperienceRange {
+  min?: number;
+  max?: number;
+  raw?: string;
 }
 
 export interface SourceConfig {
@@ -28,19 +97,52 @@ export interface SourceConfig {
   tags: string[];
 }
 
+export interface CuratedSourceDescriptor extends SourceConfig {
+  country: CountryCode;
+  category: CuratedSourceCategory;
+  prominence: string;
+  readiness: IntegrationReadiness;
+  strategy: IntegrationStrategy;
+  notes: string;
+}
+
+export interface CountrySourceCatalog {
+  country: CountryCode;
+  countryName: string;
+  overview: string;
+  primarySignal: string;
+  sources: CuratedSourceDescriptor[];
+}
+
 export interface JobListing {
   id: string;
   title: string;
   company: string;
+  companySlug: string;
   location: string;
+  locations: string[];
   normalizedLocation: string;
   url: string;
+  applyUrl?: string;
   sourceId: string;
   sourceName: string;
+  department?: string;
   tags: string[];
+  technologies: string[];
+  languageRequirements: string[];
+  finnishRequirement: LanguageRequirement;
+  workModes: WorkMode[];
+  employmentTypes: string[];
+  seniority: SeniorityLevel;
+  yearsExperience?: ExperienceRange;
+  requirementSignals: string[];
+  postedAt?: string;
+  deadlineAt?: string;
   postedLabel?: string;
   remote: boolean;
   confidence: number;
+  sourceQuality: SourceQuality;
+  description?: string;
   summary: string;
 }
 
@@ -70,6 +172,8 @@ export interface SourceSnapshot {
   refreshedAt: string;
   jobsFound: number;
   companiesFound: number;
+  totalAvailableJobs?: number;
+  totalAvailableCompanies?: number;
   notes: string[];
   jobs: JobListing[];
   companies: CompanyProfile[];
@@ -82,13 +186,20 @@ export interface AnalyticsBucket {
 
 export interface PlatformAnalytics {
   totalJobs: number;
+  sampledJobs: number;
   totalCompanies: number;
+  sampledCompanies: number;
   liveSources: number;
   fallbackSources: number;
   remoteFriendlyJobs: number;
   bySource: AnalyticsBucket[];
   byLocation: AnalyticsBucket[];
   bySector: AnalyticsBucket[];
+  byTechnology: AnalyticsBucket[];
+  bySeniority: AnalyticsBucket[];
+  byFinnishRequirement: AnalyticsBucket[];
+  byDepartment: AnalyticsBucket[];
+  byCompany: AnalyticsBucket[];
 }
 
 export interface PlatformIntelligence {
@@ -99,6 +210,89 @@ export interface PlatformIntelligence {
   companies: CompanyProfile[];
   analytics: PlatformAnalytics;
   brief: string[];
+}
+
+export interface SavedSearchRecord {
+  id: string;
+  query: string;
+  label: string;
+  createdAt: string;
+  lastUsedAt: string;
+  countryCodes: CountryCode[];
+  mode: WorkspaceMode;
+}
+
+export interface CompanyNoteRecord {
+  id: string;
+  companyId?: string;
+  companySlug: string;
+  companyName: string;
+  status: CompanyNoteStatus;
+  body: string;
+  nextAction?: string;
+  tags: string[];
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface SnapshotHistoryRecord {
+  id: string;
+  createdAt: string;
+  totalJobs: number;
+  sampledJobs: number;
+  totalCompanies: number;
+  liveSources: number;
+  fallbackSources: number;
+  topTechnology?: string;
+  topLocation?: string;
+  summary: string;
+}
+
+export interface WorkspacePreferences {
+  mode: WorkspaceMode;
+  pinnedCountries: CountryCode[];
+}
+
+export interface WorkspaceState {
+  customSources: SourceConfig[];
+  savedSearches: SavedSearchRecord[];
+  companyNotes: CompanyNoteRecord[];
+  snapshotHistory: SnapshotHistoryRecord[];
+  preferences: WorkspacePreferences;
+}
+
+export interface WorkspaceEnvelope {
+  state: WorkspaceState;
+  driver: PersistenceDriver;
+  canUseDatabase: boolean;
+}
+
+export interface ResearchMetric {
+  label: string;
+  value: string;
+  detail: string;
+}
+
+export interface ResearchReport {
+  slug: string;
+  title: string;
+  category: string;
+  summary: string;
+  publishedAt: string;
+  readingTime: string;
+  highlights: string[];
+}
+
+export interface ResearchPerspective {
+  title: string;
+  audience: string;
+  summary: string;
+}
+
+export interface ResearchPlatformCard {
+  title: string;
+  summary: string;
+  emphasis: string;
 }
 
 export interface OutreachPlan {
@@ -117,6 +311,9 @@ export interface GroundedJobReference {
   location: string;
   url: string;
   sourceName: string;
+  seniority?: SeniorityLevel;
+  technologies?: string[];
+  finnishRequirement?: LanguageRequirement;
 }
 
 export interface GroundedCompanyReference {
@@ -142,10 +339,30 @@ export const ParserHintSchema = z
     "generic-jobs",
     "generic-companies",
     "generic-mixed",
+    "ashby",
+    "greenhouse",
+    "lever",
+    "smartrecruiters",
     "tyomarkkinatori",
     "dealroom",
   ])
   .optional();
+
+export const WorkspaceModeSchema = z.enum(["pro", "simple"]);
+
+export const CountryCodeSchema = z.enum([
+  "GLOBAL",
+  "FI",
+  "FR",
+  "DE",
+  "NL",
+  "BE",
+  "PL",
+  "UK",
+  "US",
+  "SE",
+  "NO",
+]);
 
 export const SourceConfigSchema = z.object({
   id: z.string().min(1),

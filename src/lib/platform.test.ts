@@ -14,7 +14,7 @@ const source: SourceConfig = {
   name: "Smartly Careers",
   url: "https://job-boards.greenhouse.io/smartlyio",
   kind: "jobs",
-  parserHint: "generic-jobs",
+  parserHint: "greenhouse",
   description: "Direct company board.",
   tags: ["company-board"],
 };
@@ -23,15 +23,31 @@ const job: JobListing = {
   id: "job-1",
   title: "Senior Data Engineer",
   company: "Smartly",
+  companySlug: "smartly",
   location: "Helsinki",
+  locations: ["Helsinki"],
   normalizedLocation: "Helsinki",
   url: "https://example.com/jobs/1",
+  applyUrl: "https://example.com/jobs/1/apply",
   sourceId: source.id,
   sourceName: source.name,
+  department: "Data",
   tags: ["engineering", "remote-friendly"],
+  technologies: ["AWS", "Python"],
+  languageRequirements: ["English"],
+  finnishRequirement: "english-friendly",
+  workModes: ["hybrid"],
+  employmentTypes: ["Full-time"],
+  seniority: "senior",
+  yearsExperience: { min: 5, raw: "5+ years" },
+  requirementSignals: ["5+ years building data platforms"],
+  postedAt: new Date().toISOString(),
+  deadlineAt: new Date().toISOString(),
   postedLabel: "today",
   remote: true,
   confidence: 0.82,
+  sourceQuality: "api",
+  description: "5+ years building data platforms on AWS.",
   summary: "Parsed from the careers board.",
 };
 
@@ -61,6 +77,8 @@ const snapshot: SourceSnapshot = {
   refreshedAt: new Date().toISOString(),
   jobsFound: 1,
   companiesFound: 1,
+  totalAvailableJobs: 90,
+  totalAvailableCompanies: 1,
   notes: [],
   jobs: [job],
   companies: [company],
@@ -70,11 +88,14 @@ describe("buildAnalytics", () => {
   it("summarizes jobs, companies, and source density", () => {
     const analytics = buildAnalytics([snapshot], [job], [company]);
 
-    expect(analytics.totalJobs).toBe(1);
+    expect(analytics.totalJobs).toBe(90);
+    expect(analytics.sampledJobs).toBe(1);
     expect(analytics.totalCompanies).toBe(1);
     expect(analytics.liveSources).toBe(1);
     expect(analytics.remoteFriendlyJobs).toBe(1);
     expect(analytics.byLocation[0]?.label).toBe("Helsinki");
+    expect(analytics.byTechnology[0]?.label).toBe("AWS");
+    expect(analytics.bySeniority[0]?.label).toBe("senior");
   });
 });
 

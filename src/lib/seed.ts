@@ -6,11 +6,11 @@ export const defaultSources: SourceConfig[] = [
   {
     id: "tyomarkkinatori-finland",
     name: "Tyomarkkinatori Finland",
-    url: "https://tyomarkkinatori.fi/en",
+    url: "https://tyomarkkinatori.fi/en/personal-customers/vacancies",
     kind: "jobs",
     parserHint: "tyomarkkinatori",
     description:
-      "National market scan for Finnish job demand. Use it as a broad reality check before narrowing down outreach.",
+      "National market scan for Finnish job demand via the official vacancies surface and structured vacancy detail records.",
     tags: ["public-market", "jobs", "finland"],
   },
   {
@@ -18,9 +18,9 @@ export const defaultSources: SourceConfig[] = [
     name: "Smartly Careers",
     url: "https://job-boards.greenhouse.io/smartlyio",
     kind: "jobs",
-    parserHint: "generic-jobs",
+    parserHint: "greenhouse",
     description:
-      "Direct company board that helps keep the pipeline grounded in first-party openings.",
+      "Direct Greenhouse board with structured openings and full job descriptions for fact extraction.",
     tags: ["company-board", "greenhouse", "helsinki"],
   },
   {
